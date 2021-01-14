@@ -1,0 +1,40 @@
+version: "3"
+
+volumes:
+  grafana-data:
+  grafana-conf:
+  grafana-logs:
+
+services:
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:v2.24.0
+    volumes:
+      - "./prometheus-data:/prometheus"
+    user: "1000:1000"
+    command: ["--config.file=/prometheus/prometheus.yml"]
+    ports:
+      - "9090:9090"
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:7.3.6
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=rpigrafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - grafana-conf:/etc/grafana
+      - grafana-logs:/var/log/grafana
+    ports:
+      - "3000:3000"
+    # force user to avoid permissions issues
+    #user: "0:0"
+
+  temperature-exporter:
+    container_name: temperature-exporter
+    build: ./temperature-exporter
+    ports:
+      - "8000:8000"
+    command: --port 8000 --device-id 28-0307977999cc --room "Salon"
+    volumes:
+      - "/sys/devices/w1_bus_master1/:/sys/devices/w1_bus_master1/:ro"
